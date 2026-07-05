@@ -687,6 +687,9 @@ async function startSandboxBootstrap(): Promise<void> {
   }
 }
 
+// Pluggable event sender — defaults to mainWindow IPC, swapped for JSONL in headless mode
+let eventSender: ((event: ServerEvent) => void) | null = null;
+
 // 发送事件到渲染进程（含远程会话拦截）
 function sendToRenderer(event: ServerEvent) {
   const payload =
@@ -787,8 +790,10 @@ function sendToRenderer(event: ServerEvent) {
     }
   }
 
-  // 发送到本地 UI
-  if (mainWindow && !mainWindow.isDestroyed()) {
+  // 发送到本地 UI（or headless JSONL sender）
+  if (eventSender) {
+    eventSender(event);
+  } else if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('server-event', event);
   }
 }
@@ -824,6 +829,26 @@ app
       log('[Headless] Starting in headless mode');
       log('[Headless] Args:', JSON.stringify(headlessArgs));
 
+      if (headlessArgs.autoApprove) {
+        process.stderr.write(
+          '\n⚠️  WARNING: --auto-approve is active. ALL tool calls (file writes, shell commands, network) will be approved without confirmation.\n\n'
+        );
+      }
+
+      // Validate --cwd before proceeding
+      const cwdUnsupported = getWorkspacePathUnsupportedReason(headlessArgs.cwd);
+      if (cwdUnsupported) {
+        process.stderr.write(`Error: --cwd path is invalid: ${cwdUnsupported}\n`);
+        process.exit(1);
+        return;
+      }
+      const fs = await import('fs');
+      if (!fs.existsSync(headlessArgs.cwd)) {
+        process.stderr.write(`Error: --cwd path does not exist: ${headlessArgs.cwd}\n`);
+        process.exit(1);
+        return;
+      }
+
       // Apply dev logs setting
       setDevLogsEnabled(configStore.get('enableDevLogs'));
 
@@ -836,20 +861,8 @@ app
         new MemoryExtension(memoryService),
       ]);
 
-      // Use the headless JSONL writer instead of webContents.send
+      // Build the JSONL sender with permission interception BEFORE constructing SessionManager
       const headlessSendToRenderer = createHeadlessSendToRenderer();
-      sessionManager = new SessionManager(
-        db,
-        headlessSendToRenderer,
-        pluginRuntimeService,
-        headlessExtensionManager
-      );
-
-      // Auto-approve or auto-deny permissions in headless mode.
-      // The SessionManager fires permission.request events through sendToRenderer;
-      // in GUI mode the renderer shows a dialog and sends permission.response back.
-      // In headless mode we intercept these events and respond automatically.
-      const origHeadlessSend = headlessSendToRenderer;
       const headlessSendWithPermission = (event: ServerEvent) => {
         if (event.type === 'permission.request') {
           const { toolUseId } = event.payload;
@@ -857,11 +870,9 @@ app
           log(
             `[Headless] Permission ${result} for ${event.payload.toolName} (auto-approve=${headlessArgs.autoApprove})`
           );
-          // Respond asynchronously to avoid blocking the event emission
           setTimeout(() => {
             sessionManager?.handlePermissionResponse(toolUseId, result);
           }, 0);
-          // Still emit the event to stdout so the caller sees it
         }
         if (event.type === 'sudo.password.request') {
           const { toolUseId } = event.payload;
@@ -870,10 +881,13 @@ app
             sessionManager?.handleSudoPasswordResponse(toolUseId, null);
           }, 0);
         }
-        origHeadlessSend(event);
+        headlessSendToRenderer(event);
       };
 
-      // Recreate SessionManager with the permission-intercepting sender
+      // Set the global event sender so handleClientEvent's sendToRenderer calls
+      // go through JSONL instead of the null mainWindow
+      eventSender = headlessSendWithPermission;
+
       sessionManager = new SessionManager(
         db,
         headlessSendWithPermission,
@@ -968,6 +982,23 @@ app
         });
       }
 
+      // Helper: wait for a session to reach idle/error state
+      const waitForSessionCompletion = (sessionId: string): Promise<void> =>
+        new Promise((resolve) => {
+          const checkInterval = setInterval(() => {
+            const sessions = sessionManager!.listSessions();
+            const current = sessions.find((s) => s.id === sessionId);
+            if (!current || current.status === 'idle' || current.status === 'error') {
+              clearInterval(checkInterval);
+              resolve();
+            }
+          }, 500);
+          // Clear interval on process exit to avoid firing during cleanup
+          for (const sig of ['SIGTERM', 'SIGINT'] as const) {
+            process.once(sig, () => clearInterval(checkInterval));
+          }
+        });
+
       if (headlessArgs.prompt) {
         // ── Single-shot mode: run prompt, stream output, exit ──
         log('[Headless] Single-shot mode with prompt');
@@ -992,21 +1023,7 @@ app
             headlessArgs.cwd
           );
           emitSessionStarted(session.id);
-
-          // Wait for the session to complete by polling status.
-          // The SessionManager emits session.status events through sendToRenderer,
-          // but we also need to know when to exit.
-          await new Promise<void>((resolve) => {
-            const checkInterval = setInterval(() => {
-              const sessions = sessionManager!.listSessions();
-              const current = sessions.find((s) => s.id === session.id);
-              if (!current || current.status === 'idle' || current.status === 'error') {
-                clearInterval(checkInterval);
-                resolve();
-              }
-            }, 500);
-          });
-
+          await waitForSessionCompletion(session.id);
           emitSessionEnded(session.id);
           await headlessCleanup();
           process.exit(0);
@@ -1027,6 +1044,10 @@ app
         emitHeadlessReady();
 
         startRpcLoop(async (event) => {
+          // Guard GUI-only operations in headless mode
+          if (event.type === 'folder.select' || event.type === 'workdir.select') {
+            throw new Error(`${event.type} is not supported in headless mode`);
+          }
           return handleClientEvent(event);
         });
 
@@ -1056,18 +1077,7 @@ app
               headlessArgs.cwd
             );
             emitSessionStarted(session.id);
-
-            await new Promise<void>((resolve) => {
-              const checkInterval = setInterval(() => {
-                const sessions = sessionManager!.listSessions();
-                const current = sessions.find((s) => s.id === session.id);
-                if (!current || current.status === 'idle' || current.status === 'error') {
-                  clearInterval(checkInterval);
-                  resolve();
-                }
-              }, 500);
-            });
-
+            await waitForSessionCompletion(session.id);
             emitSessionEnded(session.id);
             await headlessCleanup();
             process.exit(0);
