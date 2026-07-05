@@ -98,7 +98,7 @@ export interface AppConfig {
   configSets: ApiConfigSet[];
 
   // Optional: Claude Code CLI path override
-  claudeCodePath?: string;
+  agentCliPath?: string;
 
   // Optional: Default working directory
   defaultWorkdir?: string;
@@ -162,7 +162,7 @@ const DIRECT_READ_KEYS = new Set<keyof AppConfig>([
   'customProtocol',
   'activeProfileKey',
   'activeConfigSetId',
-  'claudeCodePath',
+  'agentCliPath',
   'defaultWorkdir',
   'globalSkillsPath',
   'enableDevLogs',
@@ -238,7 +238,7 @@ const defaultConfig: AppConfig = {
   profiles: defaultProfiles,
   activeConfigSetId: DEFAULT_CONFIG_SET_ID,
   configSets: [defaultConfigSet],
-  claudeCodePath: '',
+  agentCliPath: '',
   defaultWorkdir: '',
   globalSkillsPath: '',
   enableDevLogs: false,
@@ -964,8 +964,8 @@ export class ConfigStore {
       profiles: projected.profiles,
       activeConfigSetId,
       configSets,
-      claudeCodePath:
-        typeof raw.claudeCodePath === 'string' ? raw.claudeCodePath : defaultConfig.claudeCodePath,
+      agentCliPath:
+        typeof raw.agentCliPath === 'string' ? raw.agentCliPath : defaultConfig.agentCliPath,
       defaultWorkdir:
         typeof raw.defaultWorkdir === 'string' ? raw.defaultWorkdir : defaultConfig.defaultWorkdir,
       globalSkillsPath:
@@ -1377,8 +1377,8 @@ export class ConfigStore {
     const projectedConfig = this.composeProjectedConfig(current, nextConfigSets, activeConfigSetId);
     this.saveConfig({
       ...projectedConfig,
-      claudeCodePath:
-        updates.claudeCodePath !== undefined ? updates.claudeCodePath : current.claudeCodePath,
+      agentCliPath:
+        updates.agentCliPath !== undefined ? updates.agentCliPath : current.agentCliPath,
       defaultWorkdir:
         updates.defaultWorkdir !== undefined ? updates.defaultWorkdir : current.defaultWorkdir,
       globalSkillsPath:
@@ -1539,7 +1539,7 @@ export class ConfigStore {
     delete process.env.OPENAI_ACCOUNT_ID;
     delete process.env.GEMINI_API_KEY;
     delete process.env.GEMINI_BASE_URL;
-    delete process.env.CLAUDE_CODE_PATH;
+    delete process.env.AGENT_CLI_PATH;
     delete process.env.COWORK_WORKDIR;
 
     const useOpenAI =
@@ -1627,7 +1627,7 @@ export class ConfigStore {
       }
     }
 
-    // claudeCodePath is no longer used (the agent SDK handles model routing natively)
+    // agentCliPath is no longer used (the agent SDK handles model routing natively)
 
     if (projectedConfig.defaultWorkdir) {
       process.env.COWORK_WORKDIR = projectedConfig.defaultWorkdir;

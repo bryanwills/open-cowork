@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const runPiAiOneShotMock = vi.hoisted(() => vi.fn());
 
-vi.mock('../../main/claude/claude-sdk-one-shot', () => ({
+vi.mock('../../main/agent/sdk-one-shot', () => ({
   runPiAiOneShot: runPiAiOneShotMock,
 }));
 
@@ -20,7 +20,7 @@ function makeConfig(timeoutMs: number): AppConfig {
     profiles: {},
     activeConfigSetId: 'default',
     configSets: [],
-    claudeCodePath: '',
+    agentCliPath: '',
     defaultWorkdir: '',
     globalSkillsPath: '',
     enableDevLogs: false,

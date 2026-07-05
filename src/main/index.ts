@@ -818,7 +818,7 @@ app
     log('  ANTHROPIC_AUTH_TOKEN:', process.env.ANTHROPIC_AUTH_TOKEN ? '✓ Set' : '✗ Not set');
     log('  ANTHROPIC_BASE_URL:', process.env.ANTHROPIC_BASE_URL || '(not set)');
     log('  CLAUDE_MODEL:', process.env.CLAUDE_MODEL || '(not set)');
-    log('  CLAUDE_CODE_PATH:', process.env.CLAUDE_CODE_PATH || '(not set)');
+    log('  AGENT_CLI_PATH:', process.env.AGENT_CLI_PATH || '(not set)');
     log('  OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '✓ Set' : '✗ Not set');
     log('  OPENAI_BASE_URL:', process.env.OPENAI_BASE_URL || '(not set)');
     log('  OPENAI_MODEL:', process.env.OPENAI_MODEL || '(not set)');
@@ -2082,7 +2082,7 @@ ipcMain.handle('logs.export', async () => {
         sandboxEnabled: !!configStore.get('sandboxEnabled'),
         thinkingEnabled: !!configStore.get('enableThinking'),
         apiKeyConfigured: !!configStore.get('apiKey'),
-        claudeCodePathConfigured: !!configStore.get('claudeCodePath'),
+        agentCliPathConfigured: !!configStore.get('agentCliPath'),
         defaultWorkdir: configStore.get('defaultWorkdir') || null,
         globalSkillsPathConfigured: !!configStore.get('globalSkillsPath'),
       },

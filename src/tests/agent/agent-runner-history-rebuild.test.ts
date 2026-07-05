@@ -1,6 +1,6 @@
 /**
  * Tests for the cold-start `<conversation_history>` rebuild path in
- * `src/main/claude/agent-runner.ts`.
+ * `src/main/agent/agent-runner.ts`.
  *
  * The rebuild path is exercised when the cached pi-coding-agent SDK session is
  * disposed (cwd change at `session-manager.ts:~993`, or runtime-signature
@@ -24,13 +24,13 @@ vi.mock('@mariozechner/pi-ai', () => ({
   getModel: vi.fn(() => undefined),
 }));
 
-vi.mock('../../main/claude/shared-auth', () => ({
+vi.mock('../../main/agent/shared-auth', () => ({
   getSharedAuthStorage: () => ({ setRuntimeApiKey: vi.fn() }),
   ModelRegistry: vi.fn(),
 }));
 
 import type { ContentBlock } from '../../renderer/types';
-import { serializeMessageContentForHistory } from '../../main/claude/agent-runner';
+import { serializeMessageContentForHistory } from '../../main/agent/agent-runner';
 
 describe('serializeMessageContentForHistory', () => {
   it('serializes a single text block as raw text (legacy compatible)', () => {

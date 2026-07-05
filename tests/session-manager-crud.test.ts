@@ -33,8 +33,8 @@ vi.mock('electron-store', () => {
   return { default: MockStore };
 });
 
-vi.mock('../src/main/claude/agent-runner', () => ({
-  ClaudeAgentRunner: class {
+vi.mock('../src/main/agent/agent-runner', () => ({
+  CoworkAgentRunner: class {
     run = vi.fn();
     cancel = vi.fn();
     handleQuestionResponse = vi.fn();
@@ -108,7 +108,7 @@ describe('SessionManager.listSessions', () => {
         getAll: vi.fn(() => [row]),
         update: vi.fn(),
         delete: vi.fn(),
-      } as any,
+      } as unknown,
     });
 
     const manager = new SessionManager(db, vi.fn());
@@ -149,7 +149,7 @@ describe('SessionManager.listSessions', () => {
         getAll: vi.fn(() => [row]),
         update: vi.fn(),
         delete: vi.fn(),
-      } as any,
+      } as unknown,
     });
 
     const manager = new SessionManager(db, vi.fn());
@@ -181,7 +181,7 @@ describe('SessionManager.getMessages content normalization', () => {
             execution_time_ms: null,
           },
         ]),
-      } as any,
+      } as unknown,
     });
 
     const manager = new SessionManager(db, vi.fn());
@@ -208,7 +208,7 @@ describe('SessionManager.getMessages content normalization', () => {
             execution_time_ms: null,
           },
         ]),
-      } as any,
+      } as unknown,
     });
 
     const manager = new SessionManager(db, vi.fn());
@@ -233,7 +233,7 @@ describe('SessionManager.getMessages content normalization', () => {
             execution_time_ms: null,
           },
         ]),
-      } as any,
+      } as unknown,
     });
 
     const manager = new SessionManager(db, vi.fn());
@@ -258,7 +258,7 @@ describe('SessionManager.getMessages content normalization', () => {
             execution_time_ms: null,
           },
         ]),
-      } as any,
+      } as unknown,
     });
 
     const manager = new SessionManager(db, vi.fn());
@@ -330,7 +330,7 @@ describe('SessionManager.deleteSession cache eviction', () => {
         getAll: vi.fn(() => []),
         update: vi.fn(),
         delete: vi.fn(),
-      } as any,
+      } as unknown,
       messages: {
         create: vi.fn(),
         delete: vi.fn(),
@@ -346,7 +346,7 @@ describe('SessionManager.deleteSession cache eviction', () => {
             execution_time_ms: null,
           },
         ]),
-      } as any,
+      } as unknown,
     });
 
     const manager = new SessionManager(db, vi.fn());

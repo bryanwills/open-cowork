@@ -6,7 +6,7 @@ import {
   resolveOllamaCredentials,
   resolveOpenAICredentials,
 } from '../config/auth-utils';
-import { runPiAiOneShot } from '../claude/claude-sdk-one-shot';
+import { runPiAiOneShot } from '../agent/sdk-one-shot';
 import { logWarn } from '../utils/logger';
 
 export interface MemoryCompletionRequest {
