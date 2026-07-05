@@ -40,13 +40,13 @@ interface CommandOutput {
 
 type CommandRunner = (command: string, args: string[]) => Promise<CommandOutput>;
 
-interface ClaudeInstalledPluginRecord {
+interface InstalledPluginRecord {
   id?: string;
   installPath?: string;
 }
 
-interface ClaudePluginListOutput {
-  installed?: ClaudeInstalledPluginRecord[];
+interface PluginListOutput {
+  installed?: InstalledPluginRecord[];
 }
 
 const EMPTY_COUNTS: PluginComponentCounts = {
@@ -393,7 +393,7 @@ export class PluginRuntimeService {
     return pluginRootPath;
   }
 
-  private async listInstalledPluginsFromCli(): Promise<ClaudeInstalledPluginRecord[]> {
+  private async listInstalledPluginsFromCli(): Promise<InstalledPluginRecord[]> {
     let commandOutput: CommandOutput;
     try {
       commandOutput = await this.commandRunner('claude', ['plugin', 'list', '--json']);
@@ -408,11 +408,9 @@ export class PluginRuntimeService {
       throw new Error(`Failed to read installed plugins from Claude CLI: ${stderr || message}`);
     }
 
-    let parsed: ClaudePluginListOutput | ClaudeInstalledPluginRecord[];
+    let parsed: PluginListOutput | InstalledPluginRecord[];
     try {
-      parsed = JSON.parse(commandOutput.stdout) as
-        | ClaudePluginListOutput
-        | ClaudeInstalledPluginRecord[];
+      parsed = JSON.parse(commandOutput.stdout) as PluginListOutput | InstalledPluginRecord[];
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to parse Claude plugin list JSON: ${message}`);

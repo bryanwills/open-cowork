@@ -44,8 +44,8 @@ vi.mock('electron-store', () => {
   };
 });
 
-vi.mock('../src/main/claude/agent-runner', () => ({
-  ClaudeAgentRunner: class {
+vi.mock('../src/main/agent/agent-runner', () => ({
+  CoworkAgentRunner: class {
     run = vi.fn();
     cancel = vi.fn();
     handleQuestionResponse = vi.fn();
@@ -58,15 +58,15 @@ vi.mock('../src/main/mcp/mcp-config-store', () => ({
   },
 }));
 
-vi.mock('../src/main/claude/claude-sdk-one-shot', () => ({
-  generateTitleWithClaudeSdk: vi.fn(async () => 'Unified Title'),
+vi.mock('../src/main/agent/sdk-one-shot', () => ({
+  generateTitleWithSdk: vi.fn(async () => 'Unified Title'),
 }));
 
 import { configStore } from '../src/main/config/config-store';
 import { SessionManager } from '../src/main/session/session-manager';
-import { generateTitleWithClaudeSdk } from '../src/main/claude/claude-sdk-one-shot';
+import { generateTitleWithSdk } from '../src/main/agent/sdk-one-shot';
 
-const mockedGenerateTitleWithClaudeSdk = vi.mocked(generateTitleWithClaudeSdk);
+const mockedGenerateTitleWithClaudeSdk = vi.mocked(generateTitleWithSdk);
 
 describe('SessionManager unified title generation', () => {
   const previous = {

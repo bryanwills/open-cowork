@@ -2224,18 +2224,18 @@ async function executeGUIInteraction(
 // Helper: Execute Claude Code command
 // @ts-expect-error - Reserved for future use
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function executeClaudeCode(
+async function executeCoworkAgent(
   prompt: string,
   workingDir: string = WORKSPACE_DIR
 ): Promise<string> {
   try {
     // Check if claude-code is available
-    const claudeCodePath = process.env.CLAUDE_CODE_PATH || 'claude-code';
+    const agentCliPath = process.env.AGENT_CLI_PATH || 'claude-code';
 
     // Execute claude-code with the prompt
     const { stdout, stderr } = await execFileAsync(
       'bash',
-      ['-c', `${claudeCodePath} "${prompt.replace(/"/g, '\\"')}"`],
+      ['-c', `${agentCliPath} "${prompt.replace(/"/g, '\\"')}"`],
       {
         cwd: workingDir,
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer
@@ -3313,7 +3313,7 @@ async function main() {
   writeMCPLog('Software Development MCP Server v1.0.0');
   writeMCPLog('='.repeat(60));
   writeMCPLog(`Workspace: ${WORKSPACE_DIR}`);
-  writeMCPLog(`Claude Code: ${process.env.CLAUDE_CODE_PATH || 'claude-code (from PATH)'}`);
+  writeMCPLog(`Claude Code: ${process.env.AGENT_CLI_PATH || 'claude-code (from PATH)'}`);
   writeMCPLog('');
   writeMCPLog('Available Tools:');
   writeMCPLog('  Code Development:');

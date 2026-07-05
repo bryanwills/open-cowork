@@ -300,10 +300,7 @@ function normalizeProbeAck(raw: string): string {
     .toLowerCase();
 }
 
-export async function probeWithClaudeSdk(
-  input: ApiTestInput,
-  config: AppConfig
-): Promise<ApiTestResult> {
+export async function probeWithSdk(input: ApiTestInput, config: AppConfig): Promise<ApiTestResult> {
   const probeConfig = buildProbeConfig(input, config);
 
   if (input.provider === 'custom' && !probeConfig.baseUrl?.trim()) {
@@ -358,7 +355,7 @@ export async function probeWithClaudeSdk(
   }
 }
 
-export async function generateTitleWithClaudeSdk(
+export async function generateTitleWithSdk(
   titlePrompt: string,
   config: AppConfig
 ): Promise<string | null> {

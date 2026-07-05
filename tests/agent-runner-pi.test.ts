@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-const agentRunnerPath = path.resolve(process.cwd(), 'src/main/claude/agent-runner.ts');
+const agentRunnerPath = path.resolve(process.cwd(), 'src/main/agent/agent-runner.ts');
 const agentRunnerContent = readFileSync(agentRunnerPath, 'utf8');
 
-describe('ClaudeAgentRunner Open Cowork SDK integration', () => {
+describe('CoworkAgentRunner Open Cowork SDK integration', () => {
   it('avoids dynamic re-import shadowing for config store singletons', () => {
     expect(agentRunnerContent).toContain(
       "import { mcpConfigStore } from '../mcp/mcp-config-store'"
@@ -40,9 +40,9 @@ describe('ClaudeAgentRunner Open Cowork SDK integration', () => {
   });
 
   it('keeps MCP server logging compact unless full debug logging is enabled', () => {
-    expect(agentRunnerContent).toContain("log('[ClaudeAgentRunner] Final mcpServers summary:'");
+    expect(agentRunnerContent).toContain("log('[CoworkAgentRunner] Final mcpServers summary:'");
     expect(agentRunnerContent).toContain("if (process.env.COWORK_LOG_SDK_MESSAGES_FULL === '1') {");
-    expect(agentRunnerContent).toContain("log('[ClaudeAgentRunner] Final mcpServers config:'");
+    expect(agentRunnerContent).toContain("log('[CoworkAgentRunner] Final mcpServers config:'");
   });
 
   it('summarizes noisy SDK message updates instead of logging every text delta', () => {
@@ -50,10 +50,10 @@ describe('ClaudeAgentRunner Open Cowork SDK integration', () => {
     expect(agentRunnerContent).toContain(
       "if (updateType !== 'text_delta' && updateType !== 'thinking_delta') {"
     );
-    expect(agentRunnerContent).toContain("'[ClaudeAgentRunner] Event: message_end'");
+    expect(agentRunnerContent).toContain("'[CoworkAgentRunner] Event: message_end'");
     expect(agentRunnerContent).toContain('messageUpdateCounts: getStreamEventSummary()');
     expect(agentRunnerContent).toContain("if (process.env.COWORK_LOG_SDK_MESSAGES_FULL === '1') {");
-    expect(agentRunnerContent).toContain("'[ClaudeAgentRunner] message_end raw message:'");
+    expect(agentRunnerContent).toContain("'[CoworkAgentRunner] message_end raw message:'");
   });
 
   it('reuses the shared user-facing error helper', () => {

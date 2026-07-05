@@ -3,11 +3,11 @@ import type { ApiTestResult } from '../src/renderer/types';
 import type { AppConfig } from '../src/main/config/config-store';
 
 const mocks = vi.hoisted(() => ({
-  probeWithClaudeSdk: vi.fn(),
+  probeWithSdk: vi.fn(),
 }));
 
-vi.mock('../src/main/claude/claude-sdk-one-shot', () => ({
-  probeWithClaudeSdk: mocks.probeWithClaudeSdk,
+vi.mock('../src/main/agent/sdk-one-shot', () => ({
+  probeWithSdk: mocks.probeWithSdk,
 }));
 
 import { runConfigApiTest } from '../src/main/config/config-test-routing';
@@ -23,7 +23,7 @@ function createConfig(): AppConfig {
     profiles: {},
     activeConfigSetId: 'default',
     configSets: [],
-    claudeCodePath: '',
+    agentCliPath: '',
     defaultWorkdir: '',
     globalSkillsPath: '',
     enableDevLogs: true,
@@ -35,12 +35,12 @@ function createConfig(): AppConfig {
 
 describe('runConfigApiTest', () => {
   beforeEach(() => {
-    mocks.probeWithClaudeSdk.mockReset();
+    mocks.probeWithSdk.mockReset();
   });
 
-  it('routes all providers through probeWithClaudeSdk', async () => {
+  it('routes all providers through probeWithSdk', async () => {
     const expected: ApiTestResult = { ok: true, latencyMs: 12 };
-    mocks.probeWithClaudeSdk.mockResolvedValue(expected);
+    mocks.probeWithSdk.mockResolvedValue(expected);
 
     const result = await runConfigApiTest(
       {
@@ -52,12 +52,12 @@ describe('runConfigApiTest', () => {
     );
 
     expect(result).toEqual(expected);
-    expect(mocks.probeWithClaudeSdk).toHaveBeenCalledTimes(1);
+    expect(mocks.probeWithSdk).toHaveBeenCalledTimes(1);
   });
 
-  it('routes ollama through probeWithClaudeSdk', async () => {
+  it('routes ollama through probeWithSdk', async () => {
     const expected: ApiTestResult = { ok: true, latencyMs: 9 };
-    mocks.probeWithClaudeSdk.mockResolvedValue(expected);
+    mocks.probeWithSdk.mockResolvedValue(expected);
 
     const result = await runConfigApiTest(
       {
@@ -77,12 +77,12 @@ describe('runConfigApiTest', () => {
     );
 
     expect(result).toEqual(expected);
-    expect(mocks.probeWithClaudeSdk).toHaveBeenCalledTimes(1);
+    expect(mocks.probeWithSdk).toHaveBeenCalledTimes(1);
   });
 
-  it('routes gemini through probeWithClaudeSdk', async () => {
+  it('routes gemini through probeWithSdk', async () => {
     const expected: ApiTestResult = { ok: true, latencyMs: 18 };
-    mocks.probeWithClaudeSdk.mockResolvedValue(expected);
+    mocks.probeWithSdk.mockResolvedValue(expected);
 
     const result = await runConfigApiTest(
       {
@@ -104,7 +104,7 @@ describe('runConfigApiTest', () => {
     );
 
     expect(result).toEqual(expected);
-    expect(mocks.probeWithClaudeSdk).toHaveBeenCalledTimes(1);
+    expect(mocks.probeWithSdk).toHaveBeenCalledTimes(1);
   });
 
   it('returns failure when Claude Code executable is not found', async () => {
@@ -113,7 +113,7 @@ describe('runConfigApiTest', () => {
       errorType: 'unknown',
       details: 'Claude Code executable not found. Please install @anthropic-ai/claude-code',
     };
-    mocks.probeWithClaudeSdk.mockResolvedValue(probeFailure);
+    mocks.probeWithSdk.mockResolvedValue(probeFailure);
 
     const result = await runConfigApiTest(
       {
@@ -125,7 +125,7 @@ describe('runConfigApiTest', () => {
     );
 
     expect(result).toEqual(probeFailure);
-    expect(mocks.probeWithClaudeSdk).toHaveBeenCalledTimes(1);
+    expect(mocks.probeWithSdk).toHaveBeenCalledTimes(1);
   });
 
   it('returns failure on protocol-level mismatch', async () => {
@@ -134,7 +134,7 @@ describe('runConfigApiTest', () => {
       errorType: 'unknown',
       details: 'probe_response_mismatch:pong',
     };
-    mocks.probeWithClaudeSdk.mockResolvedValue(probeFailure);
+    mocks.probeWithSdk.mockResolvedValue(probeFailure);
 
     const result = await runConfigApiTest(
       {
@@ -146,7 +146,7 @@ describe('runConfigApiTest', () => {
     );
 
     expect(result).toEqual(probeFailure);
-    expect(mocks.probeWithClaudeSdk).toHaveBeenCalledTimes(1);
+    expect(mocks.probeWithSdk).toHaveBeenCalledTimes(1);
   });
 
   it('returns unauthorized without retry for explicit key', async () => {
@@ -155,7 +155,7 @@ describe('runConfigApiTest', () => {
       errorType: 'unauthorized',
       details: '401 Unauthorized',
     };
-    mocks.probeWithClaudeSdk.mockResolvedValue(probeFailure);
+    mocks.probeWithSdk.mockResolvedValue(probeFailure);
 
     const result = await runConfigApiTest(
       {
@@ -167,6 +167,6 @@ describe('runConfigApiTest', () => {
     );
 
     expect(result).toEqual(probeFailure);
-    expect(mocks.probeWithClaudeSdk).toHaveBeenCalledTimes(1);
+    expect(mocks.probeWithSdk).toHaveBeenCalledTimes(1);
   });
 });

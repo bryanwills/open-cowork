@@ -7,7 +7,7 @@
  * - Session CRUD: create, continue, stop, delete, list
  * - Chat history persistence to SQLite via DatabaseInstance
  * - Workspace-scoped sessions with sandbox integration
- * - Delegates AI execution to ClaudeAgentRunner
+ * - Delegates AI execution to CoworkAgentRunner
  *
  * Dependencies: database, agent-runner, config-store, mcp-manager, sandbox-adapter
  */
@@ -33,7 +33,7 @@ import {
   reinitializeSandbox,
 } from '../sandbox/sandbox-adapter';
 import { SandboxSync } from '../sandbox/sandbox-sync';
-import { ClaudeAgentRunner } from '../claude/agent-runner';
+import { CoworkAgentRunner } from '../agent/agent-runner';
 import { configStore } from '../config/config-store';
 import { MCPManager } from '../mcp/mcp-manager';
 import { mcpConfigStore } from '../mcp/mcp-config-store';
@@ -55,7 +55,7 @@ import {
   getDefaultTitleFromPrompt,
   normalizeGeneratedTitle,
 } from './session-title-utils';
-import { generateTitleWithClaudeSdk } from '../claude/claude-sdk-one-shot';
+import { generateTitleWithSdk } from '../agent/sdk-one-shot';
 import { buildScheduledTaskTitle } from '../../shared/schedule/task-title';
 
 interface AgentRunner {
@@ -127,12 +127,12 @@ export class SessionManager {
    * Can be called to recreate runner when config changes
    */
   private createAgentRunner(): void {
-    this.agentRunner = this.createClaudeAgentRunner();
+    this.agentRunner = this.createCoworkAgentRunner();
     log('[SessionManager] Using Open Cowork agent runner');
   }
 
-  private createClaudeAgentRunner(): ClaudeAgentRunner {
-    return new ClaudeAgentRunner(
+  private createCoworkAgentRunner(): CoworkAgentRunner {
+    return new CoworkAgentRunner(
       {
         sendToRenderer: this.sendToRenderer,
         saveMessage: (message: Message) => this.saveMessage(message),
@@ -176,7 +176,7 @@ export class SessionManager {
    */
   invalidateMcpServersCache(): void {
     if (this.agentRunner && 'invalidateMcpServersCache' in this.agentRunner) {
-      (this.agentRunner as ClaudeAgentRunner).invalidateMcpServersCache();
+      (this.agentRunner as CoworkAgentRunner).invalidateMcpServersCache();
     }
   }
 
@@ -186,7 +186,7 @@ export class SessionManager {
    */
   invalidateSkillsSetup(): void {
     if (this.agentRunner && 'invalidateSkillsSetup' in this.agentRunner) {
-      (this.agentRunner as ClaudeAgentRunner).invalidateSkillsSetup();
+      (this.agentRunner as CoworkAgentRunner).invalidateSkillsSetup();
     }
   }
 
@@ -615,7 +615,7 @@ export class SessionManager {
     return processedContent;
   }
 
-  // Process a prompt using ClaudeAgentRunner
+  // Process a prompt using CoworkAgentRunner
   private async processPrompt(
     session: Session,
     prompt: string,
@@ -832,9 +832,7 @@ export class SessionManager {
 
   private async generateTitleWithConfig(titlePrompt: string): Promise<string | null> {
     // Always use pi-ai SDK for title generation
-    return normalizeGeneratedTitle(
-      await generateTitleWithClaudeSdk(titlePrompt, configStore.getAll())
-    );
+    return normalizeGeneratedTitle(await generateTitleWithSdk(titlePrompt, configStore.getAll()));
   }
 
   private enqueuePrompt(session: Session, prompt: string, content?: ContentBlock[]): void {

@@ -31,7 +31,7 @@ import type {
   LocalOllamaDiscoveryResult,
 } from '../../renderer/types';
 import { log, logWarn } from '../utils/logger';
-import { probeWithClaudeSdk } from '../claude/claude-sdk-one-shot';
+import { probeWithSdk } from '../agent/sdk-one-shot';
 import { fetchOllamaModelIndex } from './ollama-api';
 
 const STEP_NAMES: DiagnosticStepName[] = ['dns', 'tcp', 'tls', 'auth', 'model'];
@@ -176,7 +176,7 @@ export function shouldContinueAfterGeminiAuthProbeError(error: {
 }
 
 function getModelDiagnosticFix(
-  errorType: Awaited<ReturnType<typeof probeWithClaudeSdk>>['errorType'],
+  errorType: Awaited<ReturnType<typeof probeWithSdk>>['errorType'],
   model: string
 ): string {
   switch (errorType) {
@@ -530,7 +530,7 @@ async function stepModel(input: DiagnosticInput, step: DiagnosticStep): Promise<
     }
 
     const config = configStore.getAll();
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithSdk(
       {
         provider: input.provider,
         apiKey: input.apiKey,

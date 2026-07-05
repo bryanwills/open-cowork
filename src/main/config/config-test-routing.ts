@@ -1,10 +1,10 @@
 import type { ApiTestInput, ApiTestResult } from '../../renderer/types';
 import type { AppConfig } from './config-store';
-import { probeWithClaudeSdk } from '../claude/claude-sdk-one-shot';
+import { probeWithSdk } from '../agent/sdk-one-shot';
 
 export async function runConfigApiTest(
   payload: ApiTestInput,
-  config: AppConfig,
+  config: AppConfig
 ): Promise<ApiTestResult> {
-  return probeWithClaudeSdk(payload, config);
+  return probeWithSdk(payload, config);
 }
