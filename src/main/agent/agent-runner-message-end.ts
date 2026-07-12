@@ -25,8 +25,6 @@ interface ResolvedMessageEndPayload {
 const FOUR_XX_ERROR_RE = /\b4\d{2}\b/;
 
 export interface TerminalErrorEmissionDetails {
-  thinkingDelta?: string;
-  textDelta?: string;
   partialText: string;
   messageText: string;
 }
@@ -113,16 +111,10 @@ export function buildTerminalErrorMessage(errorText: string, partialText = ''): 
 export function buildTerminalErrorEmissionDetails(options: {
   errorText: string;
   streamedText: string;
-  flushedThinking?: string;
-  flushedText?: string;
 }): TerminalErrorEmissionDetails {
-  const thinkingDelta = options.flushedThinking || undefined;
-  const textDelta = options.flushedText || undefined;
-  const partialText = `${options.streamedText}${options.flushedText || ''}`;
+  const partialText = options.streamedText;
 
   return {
-    thinkingDelta,
-    textDelta,
     partialText,
     messageText: buildTerminalErrorMessage(options.errorText, partialText),
   };

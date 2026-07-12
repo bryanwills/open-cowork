@@ -2512,16 +2512,6 @@ Tool routing:
           streamedText,
         });
 
-        if (emission.thinkingDelta) {
-          this.sendToRenderer({
-            type: 'stream.thinking',
-            payload: { sessionId: session.id, delta: emission.thinkingDelta },
-          });
-        }
-        if (emission.textDelta) {
-          this.sendPartial(session.id, emission.textDelta);
-        }
-
         const partialText = emission.partialText ? sanitizeOutputPaths(emission.partialText) : '';
         const messageText = buildTerminalErrorMessage(errorText, partialText);
         streamedText = '';

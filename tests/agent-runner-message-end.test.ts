@@ -296,18 +296,14 @@ describe('buildTerminalErrorMessage', () => {
 });
 
 describe('buildTerminalErrorEmissionDetails', () => {
-  it('preserves flushed thinking/text deltas and appends them to partial text', () => {
+  it('preserves streamed partial text before the error footer', () => {
     const result = buildTerminalErrorEmissionDetails({
       errorText: 'HTTP 400: invalid request',
       streamedText: 'Partial body',
-      flushedThinking: 'inner reasoning',
-      flushedText: ' plus tail',
     });
 
-    expect(result.thinkingDelta).toBe('inner reasoning');
-    expect(result.textDelta).toBe(' plus tail');
-    expect(result.partialText).toBe('Partial body plus tail');
-    expect(result.messageText).toContain('Partial body plus tail');
+    expect(result.partialText).toBe('Partial body');
+    expect(result.messageText).toContain('Partial body');
     expect(result.messageText).toContain('**Error**: HTTP 400: invalid request');
   });
 
@@ -317,8 +313,6 @@ describe('buildTerminalErrorEmissionDetails', () => {
       streamedText: '',
     });
 
-    expect(result.thinkingDelta).toBeUndefined();
-    expect(result.textDelta).toBeUndefined();
     expect(result.partialText).toBe('');
     expect(result.messageText).toContain('Agent 正在自动重试');
   });
