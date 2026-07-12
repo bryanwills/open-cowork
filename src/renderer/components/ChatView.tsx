@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useActiveSessionId,
@@ -17,6 +17,7 @@ import { SubagentTracker } from './SubagentTracker';
 import { ContextUsageBar } from './ContextUsageBar';
 import type { Message, ContentBlock } from '../types';
 import { Send, Square, Plus, Loader2, Plug, X, Clock } from 'lucide-react';
+import { isScrollNearBottom, resolveSessionScrollTop } from '../utils/chat-scroll-position';
 
 type AttachedFile = {
   name: string;
@@ -133,6 +134,30 @@ export function ChatView() {
       : Math.max(0, (executionClock.endAt ?? clockNow) - executionClock.startAt);
   const timerActive = Boolean(executionClock?.startAt && executionClock.endAt === null);
 
+  useLayoutEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container || !activeSessionId) return;
+
+    const savedScrollTop = useAppStore.getState().sessionScrollPositions[activeSessionId];
+    const restoredScrollTop = resolveSessionScrollTop(
+      savedScrollTop,
+      container.scrollHeight,
+      container.clientHeight
+    );
+    container.scrollTop = restoredScrollTop;
+    isUserAtBottomRef.current = isScrollNearBottom(
+      restoredScrollTop,
+      container.scrollHeight,
+      container.clientHeight
+    );
+
+    // Prevent the generic new-message effect from overriding the session restore.
+    const sessionState = useAppStore.getState().sessionStates[activeSessionId];
+    prevMessageCountRef.current = sessionState?.messages.length ?? 0;
+    prevPartialLengthRef.current =
+      (sessionState?.partialMessage.length ?? 0) + (sessionState?.partialThinking.length ?? 0);
+  }, [activeSessionId]);
+
   // Debounced scroll function to prevent scroll conflicts
   const scrollToBottom = useRef((behavior: ScrollBehavior = 'auto', immediate: boolean = false) => {
     // Cancel any pending scroll requests
@@ -179,13 +204,16 @@ export function ChatView() {
       const distanceToBottom =
         container.scrollHeight - container.scrollTop - container.clientHeight;
       isUserAtBottomRef.current = distanceToBottom <= 80;
+      if (activeSessionId) {
+        useAppStore.getState().setSessionScrollPosition(activeSessionId, container.scrollTop);
+      }
     };
     updateScrollState();
     // 用户阅读旧消息时，阻止新消息自动滚动打断视线
     const onScroll = () => updateScrollState();
     container.addEventListener('scroll', onScroll, { passive: true });
     return () => container.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [activeSessionId]);
 
   useEffect(() => {
     const messageCount = messages.length;
