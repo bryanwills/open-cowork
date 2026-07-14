@@ -178,6 +178,31 @@ function sanitizeDiagnosticBaseUrl(value: string | undefined): string | null {
   }
 }
 
+async function verifyGeminiRuntimeForSmokeTest(): Promise<void> {
+  const { completeSimple, getModel } = await import('@mariozechner/pi-ai');
+  const model = getModel('google', 'gemini-2.5-flash');
+  if (!model) {
+    throw new Error('Gemini smoke-test model is missing from the pi-ai registry');
+  }
+
+  // Abort before dispatch so this loads the packaged Gemini provider and SDK
+  // without sending a network request or requiring a real API key.
+  const controller = new AbortController();
+  controller.abort();
+  const result = await completeSimple(
+    model,
+    {
+      systemPrompt: 'smoke',
+      messages: [{ role: 'user', content: 'smoke', timestamp: Date.now() }],
+    },
+    { apiKey: 'smoke-test-key', signal: controller.signal }
+  );
+
+  if (result.stopReason !== 'aborted') {
+    throw new Error(`Gemini provider smoke test returned ${result.stopReason}`);
+  }
+}
+
 async function resolveScheduledTaskTitle(
   prompt: string,
   _cwd?: string,
@@ -850,6 +875,13 @@ app
         log('[SmokeTest] better-sqlite3: OK');
       } catch (e) {
         log('[SmokeTest] FAIL: better-sqlite3 failed to load:', e);
+        process.exit(1);
+      }
+      try {
+        await verifyGeminiRuntimeForSmokeTest();
+        log('[SmokeTest] Gemini provider runtime: OK');
+      } catch (e) {
+        log('[SmokeTest] FAIL: Gemini provider runtime failed to load:', e);
         process.exit(1);
       }
       log('[SmokeTest] PASSED');
